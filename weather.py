@@ -82,7 +82,7 @@ def train_regression_model(x,y):
 
 def predict_future(model,current_value):
     predictions = [current_value]
-    for i in range(5):  
+    for i in range(24):  
         next_value = model.predict(np.array([[predictions[-1]]]))
 
         predictions.append(next_value[0])

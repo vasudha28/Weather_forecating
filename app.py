@@ -59,22 +59,26 @@ async def weather_report_json(request: Request, payload: CityRequest):
 
     x_temp, y_temp = prepare_regression_data(historical_data, 'Temp')
     x_hum, y_hum = prepare_regression_data(historical_data, 'Humidity')
+    x_pre,y_pre = prepare_regression_data(historical_data, 'Pressure')
 
     temp_model = train_regression_model(x_temp, y_temp)
     hum_model = train_regression_model(x_hum, y_hum)
+    pre_model = train_regression_model(x_pre, y_pre)
 
     future_temp = predict_future(temp_model, current_weather['temp_min'])
     future_humidity = predict_future(hum_model, current_weather['humidity'])
+    future_pressure = predict_future(pre_model, current_weather['pressure'])
 
     timezone = pytz.timezone('Asia/Kolkata')
     now = datetime.now(timezone)
     next_hour = now + timedelta(hours=1)
     next_hour = next_hour.replace(minute=0, second=0, microsecond=0)
-    future_times = [(next_hour + timedelta(hours=i)).strftime('%H:00') for i in range(5)]
+    future_times = [(next_hour + timedelta(hours=i)).strftime('%H:00') for i in range(24)]
 
     # Convert zip objects to lists for JSON serialization
     future_temp_list = list(zip(future_times, future_temp))
     future_humidity_list = list(zip(future_times, future_humidity))
+    future_pressure_list = list(zip(future_times, future_pressure))
 
     return JSONResponse(content={
         "city": city,
@@ -87,7 +91,8 @@ async def weather_report_json(request: Request, payload: CityRequest):
         "description": current_weather['description'],
         "rain": 'Yes' if rain_prediction == 1 else 'No',
         "future_temp": future_temp_list,
-        "future_humidity": future_humidity_list
+        "future_humidity": future_humidity_list,
+        "future_pressure": future_pressure_list
     })
 
 if __name__ == "__main__":

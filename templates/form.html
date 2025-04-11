@@ -106,6 +106,10 @@
           <ul>
             ${data.future_humidity.map(item => `<li>${item[0]}: ${item[1].toFixed(1)}%</li>`).join('')}
           </ul>
+          <h3>Future Pressure</h3>
+          <ul>
+            ${data.future_pressure.map(item => `<li>${item[0]}: ${item[1].toFixed(1)}%</li>`).join('')}
+          </ul>
         `;
       } catch (error) {
         // Hide loading indicator and show error
