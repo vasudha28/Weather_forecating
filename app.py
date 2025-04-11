@@ -15,7 +15,6 @@ templates = Jinja2Templates(directory="templates")
 async def home(request: Request):
     return templates.TemplateResponse("form.html", {"request": request})
 
-
 class CityRequest(BaseModel):
     city: str
 
