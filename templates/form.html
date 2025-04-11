@@ -46,6 +46,40 @@
       text-align: center;
       margin-top: 20px;
     }
+    .last-updated {
+      font-size: 0.8em;
+      color: #666;
+      text-align: right;
+      margin-top: 10px;
+    }
+    .auto-update {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .auto-update input {
+      margin-right: 5px;
+    }
+    .refresh-icon {
+      color: #007bff;
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 1.2em;
+    }
+    .update-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #28a745;
+      margin-right: 5px;
+      animation: blink 2s infinite;
+    }
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -61,9 +95,13 @@
   </div>
 
   <script>
+    let currentCity = '';
+    let socket = null;
+    
     async function getWeather(event) {
       event.preventDefault();
       const city = document.getElementById('city').value;
+      currentCity = city;
       const resultDiv = document.getElementById('weatherResult');
       const loadingIndicator = document.getElementById('loadingIndicator');
       
@@ -87,30 +125,12 @@
         // Hide loading indicator
         loadingIndicator.style.display = 'none';
         
-        resultDiv.innerHTML = `
-          <h3>Weather Report for ${data.city}, ${data.country}</h3>
-          <p><strong>Temperature:</strong> ${data.temp}°C</p>
-          <p><strong>Feels Like:</strong> ${data.feels_like}°C</p>
-          <p><strong>Min Temp:</strong> ${data.temp_min}°C</p>
-          <p><strong>Max Temp:</strong> ${data.temp_max}°C</p>
-          <p><strong>Humidity:</strong> ${data.humidity}%</p>
-          <p><strong>Description:</strong> ${data.description}</p>
-          <p><strong>Rain Prediction:</strong> ${data.rain}</p>
-
-          <h3>Future Temperature</h3>
-          <ul>
-            ${data.future_temp.map(item => `<li>${item[0]}: ${item[1].toFixed(1)}°C</li>`).join('')}
-          </ul>
-
-          <h3>Future Humidity</h3>
-          <ul>
-            ${data.future_humidity.map(item => `<li>${item[0]}: ${item[1].toFixed(1)}%</li>`).join('')}
-          </ul>
-          <h3>Future Pressure</h3>
-          <ul>
-            ${data.future_pressure.map(item => `<li>${item[0]}: ${item[1].toFixed(1)}%</li>`).join('')}
-          </ul>
-        `;
+        // Display the data
+        displayWeatherData(data);
+        
+        // Connect to WebSocket for real-time updates
+        connectWebSocket(city);
+        
       } catch (error) {
         // Hide loading indicator and show error
         loadingIndicator.style.display = 'none';
@@ -122,6 +142,101 @@
         console.error('Error fetching weather:', error);
       }
     }
+    
+    function displayWeatherData(data) {
+      const resultDiv = document.getElementById('weatherResult');
+      
+      resultDiv.innerHTML = `
+        <h3>Weather Report for ${data.city}, ${data.country}</h3>
+        <p><strong>Temperature:</strong> ${data.temp}°C</p>
+        <p><strong>Feels Like:</strong> ${data.feels_like}°C</p>
+        <p><strong>Min Temp:</strong> ${data.temp_min}°C</p>
+        <p><strong>Max Temp:</strong> ${data.temp_max}°C</p>
+        <p><strong>Humidity:</strong> ${data.humidity}%</p>
+        <p><strong>Description:</strong> ${data.description}</p>
+        <p><strong>Rain Prediction:</strong> ${data.rain}</p>
+
+        <h3>Future Temperature</h3>
+        <ul>
+          ${data.future_temp.map(item => `<li>${item[0]}: ${parseFloat(item[1]).toFixed(1)}°C</li>`).join('')}
+        </ul>
+
+        <h3>Future Humidity</h3>
+        <ul>
+          ${data.future_humidity.map(item => `<li>${item[0]}: ${parseFloat(item[1]).toFixed(1)}%</li>`).join('')}
+        </ul>
+        
+        <h3>Future Pressure</h3>
+        <ul>
+          ${data.future_pressure.map(item => `<li>${item[0]}: ${parseFloat(item[1]).toFixed(1)} hPa</li>`).join('')}
+        </ul>
+        
+        <div class="auto-update">
+          <span id="updateIndicator" class="update-indicator"></span>
+          <span>Auto updating every 30 minutes</span>
+          <span class="refresh-icon" onclick="manualRefresh()">⟳</span>
+        </div>
+        
+        <div class="last-updated">
+          Last updated: ${data.last_updated || 'Unknown'}
+        </div>
+      `;
+    }
+    
+    function connectWebSocket(city) {
+      // Close previous socket if exists
+      if (socket && socket.readyState !== WebSocket.CLOSED) {
+        socket.close();
+      }
+      
+      // Create new WebSocket connection
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws/${city}`;
+      socket = new WebSocket(wsUrl);
+      
+      socket.onopen = function(e) {
+        console.log(`WebSocket connection established for ${city}`);
+      };
+      
+      socket.onmessage = function(event) {
+        console.log('Received update from server');
+        const data = JSON.parse(event.data);
+        displayWeatherData(data);
+      };
+      
+      socket.onclose = function(event) {
+        if (event.wasClean) {
+          console.log(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
+        } else {
+          console.log('Connection died');
+          // Try to reconnect after a delay
+          setTimeout(() => {
+            if (currentCity) {
+              connectWebSocket(currentCity);
+            }
+          }, 5000);
+        }
+      };
+      
+      socket.onerror = function(error) {
+        console.error(`WebSocket error: ${error.message}`);
+      };
+    }
+    
+    function manualRefresh() {
+      if (currentCity) {
+        const form = document.querySelector('form');
+        document.getElementById('city').value = currentCity;
+        form.dispatchEvent(new Event('submit'));
+      }
+    }
+    
+    // Handle page visibility changes to reconnect if needed
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden && currentCity && (!socket || socket.readyState !== WebSocket.OPEN)) {
+        connectWebSocket(currentCity);
+      }
+    });
   </script>
 </body>
 </html>
