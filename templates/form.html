@@ -2,7 +2,10 @@
 <html>
 <head>
   <title>Weather Forecast</title>
+  <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Chart.js CDN for interactive charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * {
       margin: 0;
@@ -21,7 +24,7 @@
     
     .container {
       display: flex;
-      padding: 20px;
+      padding: 0px;
       height: 100vh;
       max-width: 1400px;
       margin: 0 auto;
@@ -244,6 +247,30 @@
       margin-right: 8px;
       animation: blink 2s infinite;
     }
+
+    .profession-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px;
+      background-color: #131313;
+      justify-content: center;
+    }
+  .profession-button {
+  padding: 6px 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.profession-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
     
     .loading {
       display: none;
@@ -305,7 +332,7 @@
     
     .chat-messages {
       flex: 1;
-      padding: 20px;
+      padding: 30px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -397,39 +424,6 @@
       transform: scale(1.1);
     }
     
-    /* Weather Value Indicators */
-    .value-indicator {
-      height: 8px;
-      background: linear-gradient(90deg, #e91e63, #4CAF50);
-      border-radius: 4px;
-      margin-top: 5px;
-    }
-
-    .profession-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      padding: 12px;
-      background-color: #131313;
-      justify-content: center;
-    }
-  .profession-button {
-  padding: 6px 10px;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 15px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
-}
-
-.profession-button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-}
-    
-    
     /* Animations */
     @keyframes fadeIn {
       from { opacity: 0; }
@@ -520,7 +514,9 @@
       <div class="loading" id="loadingIndicator">
         <span class="loading-spinner"></span> Loading weather data...
       </div>
-      
+      <div class="last-updated" id="lastUpdated">
+        <span class="update-dot"></span> Last updated: --
+      </div>
       <div class="current-weather" id="weatherResult">
         <div class="city-header">
           <h2 class="city-name">Enter a city to see weather</h2>
@@ -540,10 +536,12 @@
           </div>
         </div>
       </div>
-      
       <div class="forecast-cards">
         <div class="forecast-card">
           <h3 class="forecast-title"><i class="fas fa-temperature-high"></i> Temperature Forecast</h3>
+          <div class="chart-container">
+            <canvas id="tempChart"></canvas>
+          </div>
           <ul class="forecast-list" id="tempForecast">
             <li class="forecast-item">
               <span class="forecast-time">--</span>
@@ -554,6 +552,9 @@
         
         <div class="forecast-card">
           <h3 class="forecast-title"><i class="fas fa-tint"></i> Humidity Forecast</h3>
+          <div class="chart-container">
+            <canvas id="humidityChart"></canvas>
+          </div>
           <ul class="forecast-list" id="humidityForecast">
             <li class="forecast-item">
               <span class="forecast-time">--</span>
@@ -564,6 +565,9 @@
         
         <div class="forecast-card">
           <h3 class="forecast-title"><i class="fas fa-compress-alt"></i> Pressure Forecast</h3>
+          <div class="chart-container">
+            <canvas id="pressureChart"></canvas>
+          </div>
           <ul class="forecast-list" id="pressureForecast">
             <li class="forecast-item">
               <span class="forecast-time">--</span>
@@ -571,11 +575,7 @@
             </li>
           </ul>
         </div>
-      </div>
-      
-      <div class="last-updated" id="lastUpdated">
-        <span class="update-dot"></span> Last updated: --
-      </div>
+      </div>        
     </div>
     
     <div class="chat-section">
@@ -605,24 +605,24 @@
     </div>
   </div>
 
-  
-
   <script>
-
+    // Global chart objects to update charts on each data refresh
+    let tempChartObj, humidityChartObj, pressureChartObj;
+    
     // Get all profession buttons
-const professionButtons = document.querySelectorAll('.profession-button');
-
-// Add click event listeners to each button
-professionButtons.forEach(button => {
-  button.addEventListener('click', function() {
-    const profession = this.getAttribute('data-profession');
-    // Set the input value to the selected profession
-    chatInput.value = profession;
-    // Send the message
-    sendChatMessage();
-  });
-});
-
+    const professionButtons = document.querySelectorAll('.profession-button');
+    
+    // Add click event listeners to each button
+    professionButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const profession = this.getAttribute('data-profession');
+        // Set the input value to the selected profession
+        chatInput.value = profession;
+        // Send the message
+        sendChatMessage();
+      });
+    });
+    
     let currentCity = '';
     let socket = null;
     
@@ -663,7 +663,7 @@ professionButtons.forEach(button => {
         // Hide loading indicator
         loadingIndicator.style.display = 'none';
         
-        // Display the data
+        // Display the data and update charts
         displayWeatherData(data);
         
         // Connect to WebSocket for real-time updates
@@ -718,7 +718,7 @@ professionButtons.forEach(button => {
         </div>
       `;
       
-      // Update temperature forecast
+      // Update forecast lists for textual details
       tempForecastList.innerHTML = '';
       data.future_temp.slice(0, 6).forEach(item => {
         const li = document.createElement('li');
@@ -730,7 +730,6 @@ professionButtons.forEach(button => {
         tempForecastList.appendChild(li);
       });
       
-      // Update humidity forecast
       humidityForecastList.innerHTML = '';
       data.future_humidity.slice(0, 6).forEach(item => {
         const li = document.createElement('li');
@@ -742,7 +741,6 @@ professionButtons.forEach(button => {
         humidityForecastList.appendChild(li);
       });
       
-      // Update pressure forecast
       pressureForecastList.innerHTML = '';
       data.future_pressure.slice(0, 6).forEach(item => {
         const li = document.createElement('li');
@@ -758,6 +756,85 @@ professionButtons.forEach(button => {
       lastUpdatedElement.innerHTML = `
         <span class="update-dot"></span> Last updated: ${data.last_updated || new Date().toLocaleTimeString()}
       `;
+      
+      // Prepare forecast data for charts:
+      const tempLabels = data.future_temp.slice(0, 6).map(item => item[0]);
+      const tempValues = data.future_temp.slice(0, 6).map(item => parseFloat(item[1]));
+      
+      const humidityLabels = data.future_humidity.slice(0, 6).map(item => item[0]);
+      const humidityValues = data.future_humidity.slice(0, 6).map(item => parseFloat(item[1]));
+      
+      const pressureLabels = data.future_pressure.slice(0, 6).map(item => item[0]);
+      const pressureValues = data.future_pressure.slice(0, 6).map(item => parseFloat(item[1]));
+      
+      // Update (or create) the line charts
+      updateLineChart('tempChart', tempLabels, tempValues, '°C', 'rgba(233, 30, 99, 0.7)', tempChartObj, function(chart) {
+        tempChartObj = chart;
+      });
+      
+      updateLineChart('humidityChart', humidityLabels, humidityValues, '%', 'rgba(76, 175, 80, 0.7)', humidityChartObj, function(chart) {
+        humidityChartObj = chart;
+      });
+      
+      updateLineChart('pressureChart', pressureLabels, pressureValues, 'hPa', 'rgba(255, 193, 7, 0.7)', pressureChartObj, function(chart) {
+        pressureChartObj = chart;
+      });
+    }
+    
+    // Function to create or update a line chart using Chart.js
+    function updateLineChart(canvasId, labels, dataValues, unit, lineColor, chartObj, callback) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      
+      // If chart already exists, update the data instead of creating a new chart
+      if (chartObj) {
+        chartObj.data.labels = labels;
+        chartObj.data.datasets[0].data = dataValues;
+        chartObj.update();
+      } else {
+        const newChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: unit,
+              data: dataValues,
+              fill: false,
+              borderColor: lineColor,
+              tension: 0.3,
+              pointBackgroundColor: lineColor,
+              pointRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                ticks: {
+                  color: '#e0e0e0'
+                },
+                grid: {
+                  display: false
+                }
+              },
+              y: {
+                ticks: {
+                  color: '#e0e0e0'
+                },
+                grid: {
+                  color: 'rgba(255, 255, 255, 0.1)'
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                display: false
+              }
+            }
+          }
+        });
+        callback(newChart);
+      }
     }
     
     function getWeatherIcon(description) {
