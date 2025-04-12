@@ -2,3 +2,6 @@ pandas
 numpy
 fastapi
 gunicorn
+google-generativeai
+apscheduler
+uvicorn
