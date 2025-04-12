@@ -234,7 +234,7 @@ async def chat(request: Request, payload: ChatRequest):
     - Description: {weather_context.get('description', 'N/A')}
     - Rain prediction: {weather_context.get('rain', 'N/A')}
     
-    Focus on providing accurate, helpful information about the weather and related advice. Keep answers concise and weather-focused.
+    Focus on providing accurate, helpful information about the weather and related advice. Keep answers concise and weather-focused.dont exceed answer more that 2 lines
     Add some related emojis to the response to make it more engaging.
     """
     
@@ -303,4 +303,4 @@ async def websocket_endpoint(websocket: WebSocket, city: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="127.0.0.1", port=8001)
+    uvicorn.run("app:app", host="127.0.0.1", port=8000)
