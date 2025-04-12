@@ -2,7 +2,8 @@
 
 A comprehensive weather forecasting system that leverages machine learning to predict weather conditions, updates forecasts in real-time, and provides an intuitive dashboard with personalized recommendations through an AI assistant.
 
-![image](https://github.com/user-attachments/assets/6ad0b779-eca6-45b8-be52-96b827d97336)
+![image](https://github.com/user-attachments/assets/097a05f5-329c-48e0-a814-bc22468c0cff)
+
 
 ### Key Features
 
