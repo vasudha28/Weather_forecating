@@ -6,3 +6,4 @@ google-generativeai
 apscheduler
 uvicorn
 scikit-learn
+dotenv
