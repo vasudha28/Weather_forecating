@@ -11,6 +11,11 @@ import json
 import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from typing import Dict, List, Any
+import google.generativeai as genai
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -18,6 +23,7 @@ templates = Jinja2Templates(directory="templates")
 # In-memory storage for weather data
 weather_cache: Dict[str, Dict[str, Any]] = {}
 last_update_times: Dict[str, str] = {}
+chat_history: Dict[str, List[Dict[str, str]]] = {}
 
 # WebSocket connection manager
 class ConnectionManager:
@@ -44,6 +50,10 @@ manager = ConnectionManager()
 # Initialize scheduler
 scheduler = AsyncIOScheduler()
 
+# Initialize Gemini API (replace with your API key)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=GEMINI_API_KEY)
+
 @app.on_event("startup")
 async def startup_event():
     scheduler.start()
@@ -54,6 +64,10 @@ async def shutdown_event():
 
 class CityRequest(BaseModel):
     city: str
+
+class ChatRequest(BaseModel):
+    city: str
+    message: str
 
 async def update_weather_data(city: str):
     """Fetch updated weather data for a city"""
@@ -196,6 +210,78 @@ async def weather_report_json(request: Request, payload: CityRequest):
     
     return JSONResponse(content=weather_data)
 
+@app.post("/chat")
+async def chat(request: Request, payload: ChatRequest):
+    city = payload.city
+    user_message = payload.message
+    
+    # Initialize chat history for this city if it doesn't exist
+    if city not in chat_history:
+        chat_history[city] = []
+    
+    # Get weather data for context
+    weather_context = weather_cache.get(city, {})
+    
+    # Prepare the system prompt with weather data context
+    system_prompt = f"""
+    You are a helpful weather assistant. Answer questions about weather for {city}. 
+    
+    Current weather information:
+    - Temperature: {weather_context.get('temp', 'N/A')}°C
+    - Feels like: {weather_context.get('feels_like', 'N/A')}°C
+    - Min/Max temp: {weather_context.get('temp_min', 'N/A')}°C / {weather_context.get('temp_max', 'N/A')}°C
+    - Humidity: {weather_context.get('humidity', 'N/A')}%
+    - Description: {weather_context.get('description', 'N/A')}
+    - Rain prediction: {weather_context.get('rain', 'N/A')}
+    
+    Focus on providing accurate, helpful information about the weather and related advice. Keep answers concise and weather-focused. and also provide the suggestions to the individuals based on their professions.
+    Add some related emojis to the response to make it more engaging.
+    """
+    
+    # Record user message in history
+    chat_history[city].append({"role": "user", "content": user_message})
+    
+    try:
+        # Configure the Gemini model
+        generation_config = {
+            "temperature": 0.7,
+            "top_p": 0.95,
+            "top_k": 40,
+            "max_output_tokens": 1024,
+        }
+        
+        # Create a Gemini chat model
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-pro",
+            generation_config=generation_config
+        )
+        
+        # Create a chat session
+        chat = model.start_chat(history=[
+            {"role": "user", "parts": [system_prompt]},
+            *[{"role": msg["role"], "parts": [msg["content"]]} for msg in chat_history[city][-5:]]  # Last 5 messages
+        ])
+        
+        # Generate a response from Gemini
+        response = chat.send_message(user_message)
+        assistant_response = response.text
+        
+        # Record assistant response in history
+        chat_history[city].append({"role": "assistant", "content": assistant_response})
+        
+        # Limit history size to prevent memory issues
+        if len(chat_history[city]) > 20:
+            chat_history[city] = chat_history[city][-20:]
+        
+        return JSONResponse(content={"response": assistant_response})
+    
+    except Exception as e:
+        print(f"Error in chat response: {str(e)}")
+        return JSONResponse(
+            content={"response": "I'm having trouble answering right now. Please try again later."},
+            status_code=500
+        )
+
 @app.websocket("/ws/{city}")
 async def websocket_endpoint(websocket: WebSocket, city: str):
     await manager.connect(websocket, city)
@@ -217,4 +303,4 @@ async def websocket_endpoint(websocket: WebSocket, city: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("app:app", host="127.0.0.1", port=8000)
