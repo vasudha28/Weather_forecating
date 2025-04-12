@@ -52,7 +52,7 @@ scheduler = AsyncIOScheduler()
 
 # Initialize Gemini API (replace with your API key)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=GEMINI_API_KEY)
+genai.configure(api_key="AIzaSyAlPMwEtaYeEwoSwpBKmm4RaD4SB4NagU0")
 
 @app.on_event("startup")
 async def startup_event():
