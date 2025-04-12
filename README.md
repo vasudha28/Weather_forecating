@@ -101,10 +101,9 @@ Weather API → Data Processing → ML Model Training → Forecast Generation �
 ## 📝 Future Enhancements
 
 - Integration with additional weather data sources for improved accuracy
-- Multilingual chat assistance for global accessibility
+- Multilingual chat assistance for regional accessibility
 - Customizable alert system for extreme weather conditions
 - Detailed dashboard visualization with advanced analytics
-- Expanded forecast range (7-day predictions)
 - Mobile application for on-the-go access
 
 ## 👥 Contributors
