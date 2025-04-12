@@ -2,9 +2,6 @@
 
 A comprehensive weather forecasting system that leverages machine learning to predict weather conditions, updates forecasts in real-time, and provides an intuitive dashboard with personalized recommendations through an AI assistant.
 
-![Screenshot 2025-04-12 150212](https://github.com/user-attachments/assets/dd49f639-656e-4ea5-bbee-c855b13844e5)
-
-
 ![image](https://github.com/user-attachments/assets/1b365bd8-d79a-476d-9344-b62db6ac25e1)
 
 
@@ -21,6 +18,11 @@ A comprehensive weather forecasting system that leverages machine learning to pr
 Weather forecasting is critical for industries like agriculture, transportation, energy, and event planning. Accurate forecasts help organizations make informed decisions, reduce costs, and ensure safety. However, forecasting can be complex due to rapidly changing variables such as temperature, humidity, wind speed, and precipitation.
 
 This project develops a machine learning model to predict weather conditions, schedules regular data updates, and visualizes forecast insights on a dashboard. By automating data ingestion and updates, stakeholders can access timely weather information in an intuitive format.
+
+##Architecture
+
+![image](https://github.com/user-attachments/assets/cb25e0de-8350-4a8e-b2ab-8a89a34dfdd1)
+
 
 ## 🛠️ Technologies Used
 
