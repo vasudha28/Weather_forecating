@@ -7,3 +7,4 @@ apscheduler
 uvicorn
 scikit-learn
 dotenv
+jinja2
