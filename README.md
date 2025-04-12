@@ -21,7 +21,8 @@ This project develops a machine learning model to predict weather conditions, sc
 
 ##Architecture
 
-![image](https://github.com/user-attachments/assets/cb25e0de-8350-4a8e-b2ab-8a89a34dfdd1)
+![image](https://github.com/user-attachments/assets/02be4dcc-637a-4283-9daa-562e8349b6b3)
+
 
 
 ## 🛠️ Technologies Used
