@@ -234,7 +234,7 @@ async def chat(request: Request, payload: ChatRequest):
     - Description: {weather_context.get('description', 'N/A')}
     - Rain prediction: {weather_context.get('rain', 'N/A')}
     
-    Focus on providing accurate, helpful information about the weather and related advice. Keep answers concise and weather-focused. and also provide the suggestions to the individuals based on their professions.
+    Focus on providing accurate, helpful information about the weather and related advice. Keep answers concise and weather-focused.
     Add some related emojis to the response to make it more engaging.
     """
     
