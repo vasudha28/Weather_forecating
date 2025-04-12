@@ -1,9 +1,8 @@
 ## 📊 Project Overview
 
-![image](https://github.com/user-attachments/assets/6ad0b779-eca6-45b8-be52-96b827d97336)
-
-
 A comprehensive weather forecasting system that leverages machine learning to predict weather conditions, updates forecasts in real-time, and provides an intuitive dashboard with personalized recommendations through an AI assistant.
+
+![image](https://github.com/user-attachments/assets/6ad0b779-eca6-45b8-be52-96b827d97336)
 
 ### Key Features
 
@@ -108,9 +107,9 @@ Weather API → Data Processing → ML Model Training → Forecast Generation �
 
 ## 👥 Contributors
 
-- Vasudha (https://github.com/yourusername)
-- Ankit Singh (https://github.com/teammember1)
-- Nimesh (https://github.com/teammember2)
+- Vasudha https://github.com/vasudha28
+- Ankit Singh https://github.com/Iankitsinghak
+- Nimesh https://github.com/nimeshshukla2
 ---
 
 *This project was developed as part of xto 10x Hackathon 2025.*
